@@ -1,6 +1,6 @@
 # CLUTCH — MLB Clutch Factor Analyzer (2025)
 
-This project computes a hitter **ClutchFactor** for the MLB 2025 season using Statcast plate appearance data.
+This is a web application that computes a hitter **ClutchFactor** for any selected timeframe using Statcast plate appearance data. Then displays all hitters who qualify based on PAs in a table
 
 ## High Leverage Definition
 A plate appearance is flagged as **high leverage** if:
@@ -30,7 +30,7 @@ pip install -r requirements.txt
 pip install -r requirements-api.txt
 python api.py
 ```
-In a new Terminal:
+Simultaneously in a new Terminal:
 ```
 python -m http.server 8080
 ```
