@@ -39,3 +39,5 @@ Open http://localhost:8080/index.html in your browser
 ## Screenshots
 
 ![Application](images/Screenshot1.png)
+
+![Application](images/Screenshot2.png)
