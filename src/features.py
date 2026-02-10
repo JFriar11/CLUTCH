@@ -13,14 +13,32 @@ def prepare_pa_frame(df: pd.DataFrame) -> pd.DataFrame:
 
     df = df.copy()
 
-    # Determine a batter display name
-    # Statcast commonly provides "player_name" (often pitcher), and "batter" id.
-    # Some pulls include "batter_name". If it's missing, we create it from "player_name" as fallback.
+    # FIXED: Properly determine batter name
+    # Statcast provides 'batter' (ID) but not always 'batter_name'
+    # We need to use pybaseball's playerid_reverse_lookup or similar
     if "batter_name" not in df.columns:
-        if "batter_name" in df.columns:
-            pass
-        elif "player_name" in df.columns:
-            df["batter_name"] = df["player_name"].astype(str)
+        # Try to get batter names from the batter ID
+        if "batter" in df.columns:
+            try:
+                from pybaseball import playerid_reverse_lookup
+                unique_batters = df["batter"].dropna().unique()
+                
+                # Get player names for all unique batter IDs
+                player_lookup = playerid_reverse_lookup(unique_batters, key_type='mlbam')
+                
+                # Create a mapping dictionary
+                name_map = dict(zip(
+                    player_lookup['key_mlbam'],
+                    player_lookup['name_first'] + ' ' + player_lookup['name_last']
+                ))
+                
+                # Map batter IDs to names
+                df["batter_name"] = df["batter"].map(name_map)
+                
+            except Exception as e:
+                print(f"Warning: Could not lookup batter names: {e}")
+                # Fallback: use batter ID as string
+                df["batter_name"] = "Batter_" + df["batter"].astype(str)
         else:
             df["batter_name"] = "Unknown"
 
@@ -57,5 +75,8 @@ def prepare_pa_frame(df: pd.DataFrame) -> pd.DataFrame:
     # Keep only rows with an event label (plate appearance result)
     df["events"] = df["events"].astype("string")
     df = df.dropna(subset=["events"])
+    
+    # Also drop rows where batter_name is missing
+    df = df.dropna(subset=["batter_name"])
 
     return df
