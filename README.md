@@ -27,4 +27,11 @@ We standardize each delta across players (z-score) and combine:
 ## How to Run
 ```bash
 pip install -r requirements.txt
-python -m src.make_leaderboard --start 2025-03-01 --end 2025-11-15
+pip install -r requirements-api.txt
+python api.py
+In a new Terminal:
+python -m http.server 8080
+
+Open http://localhost:8080/index.html in your browser
+
+
