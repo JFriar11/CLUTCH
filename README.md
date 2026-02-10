@@ -36,4 +36,6 @@ python -m http.server 8080
 ```
 Open http://localhost:8080/index.html in your browser
 
+## Screenshots
 
+![Application](images/Screenshot1.png)
