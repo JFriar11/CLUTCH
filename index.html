@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MLB Clutch Factor Analyzer</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Courier+Prime:wght@400;700&family=Red+Hat+Display:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --cream: #F5F1E8;
+            --red: #C8102E;
+            --navy: #0C2340;
+            --gold: #FFB81C;
+            --green: #2B5C3F;
+            --dirt: #8B5A3C;
+            --white: #FFFFFF;
+            --shadow: rgba(12, 35, 64, 0.15);
+        }
+
+        body {
+            font-family: 'Red Hat Display', sans-serif;
+            background: linear-gradient(135deg, var(--cream) 0%, #E8E3D6 100%);
+            color: var(--navy);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(200, 16, 46, 0.02) 2px, rgba(200, 16, 46, 0.02) 4px),
+                repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(200, 16, 46, 0.02) 2px, rgba(200, 16, 46, 0.02) 4px);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .app-container {
+            position: relative;
+            z-index: 2;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+            position: relative;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 4px;
+            background: linear-gradient(90deg, transparent, var(--red), transparent);
+        }
+
+        .title {
+            font-family: 'Bebas Neue', cursive;
+            font-size: clamp(3rem, 8vw, 5.5rem);
+            color: var(--red);
+            letter-spacing: 0.05em;
+            text-shadow: 
+                3px 3px 0px var(--navy),
+                6px 6px 0px rgba(12, 35, 64, 0.1);
+            margin-bottom: 10px;
+            animation: slideDown 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .subtitle {
+            font-family: 'Courier Prime', monospace;
+            font-size: 1.1rem;
+            color: var(--dirt);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .controls-panel {
+            background: var(--white);
+            border: 4px solid var(--navy);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 
+                8px 8px 0px var(--red),
+                8px 8px 0px 4px var(--navy);
+            animation: fadeIn 0.6s ease-out 0.2s both;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .control-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .control-label {
+            font-family: 'Courier Prime', monospace;
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--navy);
+        }
+
+        .control-input {
+            font-family: 'Courier Prime', monospace;
+            padding: 12px 16px;
+            border: 3px solid var(--navy);
+            border-radius: 6px;
+            font-size: 1rem;
+            background: var(--cream);
+            color: var(--navy);
+            font-weight: 700;
+            transition: all 0.2s;
+        }
+
+        .control-input:focus {
+            outline: none;
+            background: var(--white);
+            box-shadow: 0 0 0 3px var(--gold);
+        }
+
+        .analyze-button {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 1.5rem;
+            letter-spacing: 0.05em;
+            padding: 16px 48px;
+            background: var(--red);
+            color: var(--white);
+            border: 4px solid var(--navy);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 4px 4px 0px var(--navy);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .analyze-button:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0px var(--navy);
+        }
+
+        .analyze-button:active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0px var(--navy);
+        }
+
+        .analyze-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .error-banner {
+            background: linear-gradient(135deg, rgba(200, 16, 46, 0.1), rgba(200, 16, 46, 0.05));
+            border: 3px solid var(--red);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .error-title {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 1.3rem;
+            color: var(--red);
+            margin-bottom: 10px;
+            letter-spacing: 0.05em;
+        }
+
+        .error-text {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: var(--navy);
+        }
+
+        .leaderboard {
+            background: var(--white);
+            border: 4px solid var(--navy);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px var(--shadow);
+            animation: fadeIn 0.6s ease-out 0.4s both;
+        }
+
+        .leaderboard-header {
+            background: linear-gradient(135deg, var(--navy) 0%, #1a3a5c 100%);
+            padding: 25px 30px;
+            border-bottom: 4px solid var(--gold);
+        }
+
+        .leaderboard-title {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 2rem;
+            color: var(--white);
+            letter-spacing: 0.05em;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .badge {
+            font-family: 'Courier Prime', monospace;
+            background: var(--gold);
+            color: var(--navy);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: var(--cream);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        th {
+            font-family: 'Courier Prime', monospace;
+            text-align: left;
+            padding: 16px 20px;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            color: var(--navy);
+            border-bottom: 3px solid var(--navy);
+        }
+
+        th:first-child {
+            width: 60px;
+            text-align: center;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid #E0E0E0;
+            transition: all 0.2s;
+        }
+
+        tbody tr:hover {
+            background: linear-gradient(90deg, transparent, rgba(200, 16, 46, 0.05), transparent);
+            transform: translateX(4px);
+        }
+
+        tbody tr:nth-child(odd) {
+            background: rgba(245, 241, 232, 0.3);
+        }
+
+        td {
+            padding: 16px 20px;
+            font-family: 'Red Hat Display', sans-serif;
+        }
+
+        td:first-child {
+            text-align: center;
+            font-family: 'Bebas Neue', cursive;
+            font-size: 1.5rem;
+            color: var(--red);
+        }
+
+        .player-name {
+            font-weight: 700;
+            color: var(--navy);
+            font-size: 1.1rem;
+        }
+
+        .stat-value {
+            font-family: 'Courier Prime', monospace;
+            font-weight: 700;
+        }
+
+        .clutch-score {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 1.8rem;
+            color: var(--green);
+        }
+
+        .clutch-score.negative {
+            color: var(--dirt);
+        }
+
+        .rank-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-weight: 900;
+        }
+
+        .rank-badge.gold {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: var(--navy);
+            box-shadow: 0 2px 8px rgba(255, 184, 28, 0.4);
+        }
+
+        .rank-badge.silver {
+            background: linear-gradient(135deg, #C0C0C0, #A0A0A0);
+            color: var(--navy);
+            box-shadow: 0 2px 8px rgba(192, 192, 192, 0.4);
+        }
+
+        .rank-badge.bronze {
+            background: linear-gradient(135deg, #CD7F32, #A0522D);
+            color: var(--white);
+            box-shadow: 0 2px 8px rgba(205, 127, 50, 0.4);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: var(--dirt);
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        .empty-state-text {
+            font-family: 'Courier Prime', monospace;
+            font-size: 1.1rem;
+            letter-spacing: 0.05em;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 6px solid var(--cream);
+            border-top-color: var(--red);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-family: 'Courier Prime', monospace;
+            color: var(--navy);
+            font-weight: 700;
+            letter-spacing: 0.1em;
+        }
+
+        .info-card {
+            background: linear-gradient(135deg, rgba(255, 184, 28, 0.1), rgba(200, 16, 46, 0.05));
+            border: 3px solid var(--gold);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            animation: fadeIn 0.6s ease-out 0.3s both;
+        }
+
+        .info-title {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 1.3rem;
+            color: var(--navy);
+            margin-bottom: 10px;
+            letter-spacing: 0.05em;
+        }
+
+        .info-text {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: var(--dirt);
+        }
+
+        .info-text strong {
+            color: var(--navy);
+            font-weight: 700;
+        }
+
+        @media (max-width: 768px) {
+            .control-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .title {
+                font-size: 3rem;
+            }
+
+            .controls-panel {
+                padding: 20px;
+            }
+
+            th, td {
+                padding: 12px 10px;
+                font-size: 0.85rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // API Configuration
+        const API_BASE_URL = 'http://localhost:5000';
+
+        function App() {
+            const [startDate, setStartDate] = useState('2024-03-28');
+            const [endDate, setEndDate] = useState('2024-09-29');
+            const [minPA, setMinPA] = useState(250);
+            const [minHighPA, setMinHighPA] = useState(50);
+            const [loading, setLoading] = useState(false);
+            const [data, setData] = useState([]);
+            const [analyzed, setAnalyzed] = useState(false);
+            const [error, setError] = useState(null);
+            const [apiConnected, setApiConnected] = useState(false);
+
+            // Check if API is running on component mount
+            useEffect(() => {
+                checkApiHealth();
+            }, []);
+
+            const checkApiHealth = async () => {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/health`);
+                    if (response.ok) {
+                        setApiConnected(true);
+                        console.log('✓ API connected');
+                    }
+                } catch (err) {
+                    setApiConnected(false);
+                    console.log('✗ API not connected');
+                }
+            };
+
+            const handleAnalyze = async () => {
+                setLoading(true);
+                setError(null);
+                setAnalyzed(true);
+                
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/analyze`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            start_date: startDate,
+                            end_date: endDate,
+                            min_all_pa: parseInt(minPA),
+                            min_high_pa: parseInt(minHighPA),
+                            chunk_days: 7
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        setData(result.data);
+                        setError(null);
+                        console.log(`✓ Loaded ${result.data.length} players`);
+                    } else {
+                        setError(result.error || 'Analysis failed');
+                        setData([]);
+                    }
+                } catch (err) {
+                    setError(`Cannot connect to API server. Make sure it's running on ${API_BASE_URL}`);
+                    setData([]);
+                    console.error('Error:', err);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const getRankBadgeClass = (rank) => {
+                if (rank === 1) return 'gold';
+                if (rank === 2) return 'silver';
+                if (rank === 3) return 'bronze';
+                return '';
+            };
+
+            return (
+                <div className="app-container">
+                    <header className="header">
+                        <h1 className="title">CLUTCH</h1>
+                        <p className="subtitle">MLB Clutch Factor Analyzer</p>
+                    </header>
+
+                    <div className="info-card">
+                        <div className="info-title">What is ClutchFactor?</div>
+                        <div className="info-text">
+                            <strong>ClutchFactor</strong> measures how hitters perform in high-leverage situations (LI &gt; 1.5 or late/close games) 
+                            compared to all situations. It's a composite z-score using: <strong>50% ΔwOBA</strong>, <strong>35% ΔOPS</strong>, 
+                            and <strong>15% -ΔK%</strong>. Positive scores = clutch performer. Negative = struggles under pressure.
+                        </div>
+                    </div>
+
+                    {error && (
+                        <div className="error-banner">
+                            <div className="error-title">⚠ Error</div>
+                            <div className="error-text">{error}</div>
+                        </div>
+                    )}
+
+                    <div className="controls-panel">
+                        <div className="control-grid">
+                            <div className="control-group">
+                                <label className="control-label">Start Date</label>
+                                <input 
+                                    type="date" 
+                                    className="control-input"
+                                    value={startDate}
+                                    onChange={(e) => setStartDate(e.target.value)}
+                                />
+                            </div>
+                            <div className="control-group">
+                                <label className="control-label">End Date</label>
+                                <input 
+                                    type="date" 
+                                    className="control-input"
+                                    value={endDate}
+                                    onChange={(e) => setEndDate(e.target.value)}
+                                />
+                            </div>
+                            <div className="control-group">
+                                <label className="control-label">Min Total PA</label>
+                                <input 
+                                    type="number" 
+                                    className="control-input"
+                                    value={minPA}
+                                    onChange={(e) => setMinPA(e.target.value)}
+                                />
+                            </div>
+                            <div className="control-group">
+                                <label className="control-label">Min High-Lev PA</label>
+                                <input 
+                                    type="number" 
+                                    className="control-input"
+                                    value={minHighPA}
+                                    onChange={(e) => setMinHighPA(e.target.value)}
+                                />
+                            </div>
+                        </div>
+                        <div style={{ textAlign: 'center' }}>
+                            <button 
+                                className="analyze-button"
+                                onClick={handleAnalyze}
+                                disabled={loading}
+                            >
+                                {loading ? 'Analyzing...' : 'Run Analysis'}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="leaderboard">
+                        <div className="leaderboard-header">
+                            <div className="leaderboard-title">
+                                Clutch Leaderboard
+                                {analyzed && !loading && data.length > 0 && (
+                                    <span className="badge">{data.length} Players</span>
+                                )}
+                            </div>
+                        </div>
+                        
+                        {loading ? (
+                            <div className="loading">
+                                <div className="loading-spinner"></div>
+                                <div className="loading-text">ANALYZING CLUTCH PERFORMANCE...</div>
+                            </div>
+                        ) : !analyzed ? (
+                            <div className="empty-state">
+                                <div className="empty-state-icon">⚾</div>
+                                <div className="empty-state-text">
+                                    Select your parameters and click "Run Analysis" to generate the leaderboard
+                                </div>
+                            </div>
+                        ) : data.length === 0 ? (
+                            <div className="empty-state">
+                                <div className="empty-state-icon">📭</div>
+                                <div className="empty-state-text">
+                                    No players found matching the criteria. Try adjusting your date range or minimum PA thresholds.
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="table-container">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Rank</th>
+                                            <th>Player</th>
+                                            <th>PA (All)</th>
+                                            <th>PA (High)</th>
+                                            <th>wOBA Δ</th>
+                                            <th>OPS Δ</th>
+                                            <th>K% Δ</th>
+                                            <th>ClutchFactor</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {data.map((player, index) => {
+                                            const rank = index + 1;
+                                            const badgeClass = getRankBadgeClass(rank);
+                                            const wOBADelta = (player.wOBA_high - player.wOBA_all).toFixed(3);
+                                            const OPSDelta = (player.OPS_high - player.OPS_all).toFixed(3);
+                                            const KDelta = (player['K%_high'] - player['K%_all']).toFixed(3);
+                                            
+                                            return (
+                                                <tr key={player.batter_name}>
+                                                    <td>
+                                                        {badgeClass ? (
+                                                            <div className={`rank-badge ${badgeClass}`}>{rank}</div>
+                                                        ) : (
+                                                            rank
+                                                        )}
+                                                    </td>
+                                                    <td className="player-name">{player.batter_name}</td>
+                                                    <td className="stat-value">{player.PA_all}</td>
+                                                    <td className="stat-value">{player.PA_high}</td>
+                                                    <td className="stat-value" style={{ color: wOBADelta > 0 ? 'var(--green)' : 'var(--dirt)' }}>
+                                                        {wOBADelta > 0 ? '+' : ''}{wOBADelta}
+                                                    </td>
+                                                    <td className="stat-value" style={{ color: OPSDelta > 0 ? 'var(--green)' : 'var(--dirt)' }}>
+                                                        {OPSDelta > 0 ? '+' : ''}{OPSDelta}
+                                                    </td>
+                                                    <td className="stat-value" style={{ color: KDelta < 0 ? 'var(--green)' : 'var(--dirt)' }}>
+                                                        {KDelta > 0 ? '+' : ''}{KDelta}
+                                                    </td>
+                                                    <td className={`clutch-score ${player.ClutchFactor < 0 ? 'negative' : ''}`}>
+                                                        {player.ClutchFactor > 0 ? '+' : ''}{player.ClutchFactor.toFixed(2)}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>

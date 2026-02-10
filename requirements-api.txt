@@ -1,0 +1,6 @@
+pandas
+numpy
+pybaseball
+matplotlib
+flask
+flask-cors
