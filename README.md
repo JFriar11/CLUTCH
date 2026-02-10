@@ -1,4 +1,4 @@
-# CLUTCH — MLB Clutch Factor Analyzer (2025)
+# CLUTCH — MLB Clutch Factor Analyzer 
 
 This is a web application that computes a hitter **ClutchFactor** for any selected timeframe using Statcast plate appearance data. Then displays all hitters who qualify based on PAs in a table
 
